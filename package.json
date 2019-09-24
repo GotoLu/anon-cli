@@ -1,0 +1,23 @@
+{
+  "name": "anon-cli",
+  "version": "0.0.1",
+  "description": "anon-cli",
+  "main": "index.js",
+  "bin": {
+    "anon-cli": "./bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "anon-cli"
+  ],
+  "author": "anon",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.5",
+    "chalk": "^2.4.2",
+    "commander": "^3.0.1",
+    "fs-extra": "^8.1.0"
+  }
+}
