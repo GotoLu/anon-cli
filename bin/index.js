@@ -7,13 +7,14 @@ const inquirer = require('inquirer'); // 和用户交互
 const handlebars = require('handlebars'); // 模板引擎
 const ora = require('ora');
 const logSymbols = require('log-symbols');
-const program = require('commander')
-const chalk = require('chalk')
+const program = require('commander');
+const chalk = require('chalk');
+
+const CONSTANTS = require('../config/constans');
+const util = require('../utils');
 
 // 取得包版本号
-const _v = require('../package.json').version;
-// 默认的远程仓库地址
-const DEFAULT_REMOTE_ADDR = 'https://github.com:GotoLu/webpackLearningDemo#master';
+const _v = util.getVersion();
 // 与用户交互的列表
 const genInteractiveList = defaultObj => [{
   type: 'input',
@@ -29,43 +30,31 @@ const genInteractiveList = defaultObj => [{
   type: 'input',
   name: 'remoteUrl',
   message: '请输入远程模板地址',
-  default: DEFAULT_REMOTE_ADDR,
+  default: CONSTANTS.DEFAULT_REMOTE_ADDR,
   when: answers => answers.useRemote
 }];
-
-// 给函数封一层异常捕获
-const dealCatch = (fn) => {
-  return (...args) => {
-    try {
-      fn(...args);
-    } catch (e) {
-      console.log(logSymbols.error, 'Error: ', e.message);
-      console.log(logSymbols.error, 'trace stack: ', e.stack);
-    }
-  }
-}
 
 // 处理用户交互数据
 const dealAnswers = (answers) => {
   // 项目名称
   const projName = answers.projName;
   const projExists = fs.pathExistsSync(projName);
+  // 判断该目录下是否存在相同名称的项目
   if (projExists) {
     console.log(logSymbols.error, chalk.red(`存在同名项目${projName}！`));
     return;
   }
   let { useRemote, remoteUrl } = answers;
-  const regex = /^(?:(github|gitlab|bitbucket):)?(?:(.+):)?([^\/]+)\/([^#]+)(?:#(.+))?$/
-  const match = regex.exec(remoteUrl);
-  // 远程仓库地址校验
-  if (!match) {
-    console.log(logSymbols.error, chalk.red('远程仓库地址格式不对！'));
-    return;
-  }
   // 是否使用远程模板
   if (useRemote && remoteUrl) {
+    // 远程仓库地址校验
+    const match = CONSTANTS.REMOTE_ADDR_REGEX.exec(remoteUrl);
+    if (!match) {
+      console.log(logSymbols.error, chalk.red('远程仓库地址格式不对！'));
+      return;
+    }
     // 定义提示文案，左侧有个小logo在转
-    const spinner = ora(`正在下载远程模板[${remoteUrl}]...`);
+    const spinner = ora(`正在下载远程模板...`);
     // 开始展示
     spinner.start();
     // 防止download出现异常spinner无法关闭
@@ -109,13 +98,18 @@ const dealAnswers = (answers) => {
   }
 };
 
-program
-  .version(_v, '-v, --version', 'output current version')
-  .usage('init name')
-  .command('init <projName>') // 定义初始化命令
-  .description('init project')
-  .action((projName) => { // 执行命令后的回调
-    // 开始和用户交互
-    inquirer.prompt(genInteractiveList({ projName })).then(dealCatch(dealAnswers));
-  });
-program.parse(process.argv);
+const init = () => {
+  program
+    .version(_v, '-v, --version', 'output current version')
+    .usage('init name')
+    .command('init <projName>') // 定义初始化命令
+    .description('init project')
+    .action((projName) => { // 执行命令后的回调
+      // 开始和用户交互
+      inquirer.prompt(genInteractiveList({ projName })).then(util.dealCatch(dealAnswers));
+    });
+  program.parse(process.argv);
+}
+
+// 初始化入口
+init();
